@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_protect
 
 from .models import *
+from .utils import cookieCart, cartData, guestCheckout
 
 
 class StoreView(TemplateView):
@@ -14,17 +15,10 @@ class StoreView(TemplateView):
     template_name = 'store/store.html'
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            customer = request.user.customer
-            order, created = Order.objects.get_or_create(customer=customer, complete=False)
-            items = order.orderitem_set.all()
-            cartItems = order.get_cart_items
-        else:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-            cartItems = order['get_cart_items']
+        data = cartData(request)
+        cartItems = data["cartItems"]
 
-        context = self.get_context_data(items=items, cartItems=cartItems, **kwargs)
+        context = self.get_context_data(cartItems=cartItems, **kwargs)
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
@@ -39,15 +33,11 @@ class CartView(TemplateView):
     template_name = 'store/cart.html'
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            customer = request.user.customer
-            order, created = self.model.objects.get_or_create(customer=customer, complete=False)
-            items = order.orderitem_set.all()
-            cartItems = order.get_cart_items
-        else:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-            cartItems = order['get_cart_items']
+        data = cartData(request)
+        cartItems = data["cartItems"]
+        order = data["order"]
+        items = data["items"]
+
         context = self.get_context_data(items=items, order=order, cartItems=cartItems, **kwargs)
         return self.render_to_response(context)
 
@@ -64,15 +54,11 @@ class CheckoutView(TemplateView):
     template_name = 'store/checkout.html'
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            customer = request.user.customer
-            order, created = Order.objects.get_or_create(customer=customer, complete=False)
-            items = order.orderitem_set.all()
-            cartItems = order.get_cart_items
-        else:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-            cartItems = order['get_cart_items']
+        data = cartData(request)
+        cartItems = data["cartItems"]
+        order = data["order"]
+        items = data["items"]
+
         context = self.get_context_data(items=items, order=order, cartItems=cartItems, **kwargs)
         return self.render_to_response(context)
 
@@ -117,23 +103,25 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        total = decimal.Decimal(data['form']['total'].replace(',', '.'))
-        order.transaction_id = transaction_id
-
-        if total == order.get_cart_total:
-            order.complete = True
-        order.save()
-
-        if order.shipping == True:
-            ShippingAddress.objects.create(
-                customer=customer,
-                order=order,
-                address=data['shipping']['address'],
-                city=data['shipping']['city'],
-                state=data['shipping']['state'],
-                zipcode=data['shipping']['zipcode'],
-            )
 
     else:
-        print('User is not logged in..')
+        customer, order = guestCheckout(data, request)
+
+    total = decimal.Decimal(data['form']['total'].replace(',', '.'))
+    order.transaction_id = transaction_id
+
+    if total == order.get_cart_total:
+        order.complete = True
+    order.save()
+
+    if order.shipping == True:
+        ShippingAddress.objects.create(
+            customer=customer,
+            order=order,
+            address=data['shipping']['address'],
+            city=data['shipping']['city'],
+            state=data['shipping']['state'],
+            zipcode=data['shipping']['zipcode'],
+        )
+
     return JsonResponse('Payment complete..', safe=False)

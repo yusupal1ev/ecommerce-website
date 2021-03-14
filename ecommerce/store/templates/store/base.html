@@ -26,6 +26,34 @@
         }
         var csrftoken = getToken('csrftoken');
         console.log('CSRFToken: ', csrftoken)
+
+        function getCookie(name) {
+            // Split cookie string and get all individual "name: value" pairs in array
+            var cookieArray = document.cookie.split(";");
+
+            // Loop through the array elements
+            for(var i = 0; i < cookieArray.length; i++) {
+                var cookiePair = cookieArray[i].split("=");
+
+                // Removing whitespace at the beginning of cookie name and compare it with the given string
+                if(name == cookiePair[0].trim()) {
+                    // Decode the cookie value and return
+                    console.log('cartcookie: ', cookiePair[1])
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        var cart = JSON.parse(getCookie('cart'))
+        console.log('cartcookie: ', cart)
+
+        if(cart == undefined){
+            cart = {}
+            console.log('Cart was created!')
+            document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+        }
+
     </script>
 </head>
 <body>
@@ -53,6 +81,7 @@
     </div>
 </nav>
 <div class="container">
+    <br>
     {% block content %}
 
     {% endblock %}

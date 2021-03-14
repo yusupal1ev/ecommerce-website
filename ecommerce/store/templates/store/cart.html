@@ -6,7 +6,6 @@ Cart
 {% endblock %}
 
 {% block content %}
-    <br>
     <div class="row">
         <div class="col-lg-12">
             <div class="box-element">
@@ -52,7 +51,7 @@ Cart
             <img id="up-arrow" width="120" height=64 src="{{ item.product.imageURL }}" alt="image-cart"><br>
         </div>
         <div class="col-lg-3">
-            <div><strong>{{ item.product }}</strong></div>
+            <div><strong>{{ item.product.name }}</strong></div>
         </div>
         <div class="col-lg-2">
             <div><strong>{{ item.product.price }}</strong></div>

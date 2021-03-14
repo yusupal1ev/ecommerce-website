@@ -71,7 +71,7 @@
                 {% for item in items %}
                 <div class="cart-row">
                     <div style="flex: 2"><img height="64" class="row-image" src="{{ item.product.imageURL }}"></div>
-                    <div  style="flex: 2"><p>{{ item.product }}</p></div>
+                    <div  style="flex: 2"><p>{{ item.product.name }}</p></div>
                     <div  style="flex: 2"><p>${{ item.product.price }}</p></div>
                     <div  style="flex: 2"><p>x{{ item.quantity }}</p></div>
                 </div>
@@ -148,6 +148,10 @@
             .then((data) => {
                 console.log('Success:', data);
                 alert('Transaction completed');
+
+                cart = {}
+                document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
                 window.location.href = "{% url 'store' %}"
             })
         }
